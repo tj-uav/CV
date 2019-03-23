@@ -67,6 +67,7 @@ def process_test_data():
         img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
         img = cv2.resize(img, (IMG_SIZE,IMG_SIZE))
         testing_data.append([np.array(img), img_num])
+        break
 
     shuffle(testing_data)
     np.save('test_data.npy', testing_data)
@@ -100,6 +101,7 @@ for cnt, data in enumerate(testing_images[10:40]):
     plt.title(str_label)
     y.axes.get_xaxis().set_visible(False)
     y.axes.get_yaxis().set_visible(False)
+    break
 
 plt.show()
 #loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
