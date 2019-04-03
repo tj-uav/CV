@@ -8,9 +8,9 @@ import time #temp
 def main():
     print( "targetIsolation.py is being run independently, continuing with default image" )
     try:
-        gimg = cv2.imread( "dependencies/generictarget.jpg" )
+        gimg = cv2.imread( "dependencies/generictarget2.jpg" )
     except:
-        print( "Error: Dependency missing: generictarget.png" )
+        print( "Error: Dependency missing: generictarget2.png" )
         sys.exit( 0 )
     #isolateTargetDominant( gimg, 16 )
     cv2.imwrite( "output.png", isolateTargetUnique( gimg ) )
