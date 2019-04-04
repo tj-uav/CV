@@ -10,14 +10,14 @@ def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    isolated, targetmask = isolateTargetUnique( cv2.imread( "dependencies/generictarget.jpg" ) )
+    isolated, targetmask = isolateTargetUnique( cv2.imread( "dependencies/generictarget2.jpg" ) )
     shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominant( cv2.blur( cv2.dilate( isolated, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
     print( shapeColorAlpha )
 #def getProperties( roi ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
 #    checkDependencies()
 
 #Dependencies Checker
-maindependencies = [ "generictarget.jpg", "generictarget2.jpg"]   #Dependencies required when running independently
+maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg"]   #Dependencies required when running independently
 dependencies = [ "color_hexes.txt" ]                            #Independencies always in use
 def checkDependencies():
     global dependencies
@@ -41,7 +41,7 @@ def isolateTargetUnique( croppedimage ):
     #Scales image
     scaledimg = cv2.resize( croppedimage, ( 200, 200 ) )
     #Quantization
-    scaledimg2 = quantize( scaledimg, 4 )
+    scaledimg2 = quantize( scaledimg, 16 )
     #Target isolation
     crop1 = scaledimg2[ 0:50, 0:200 ]
     crop2 = scaledimg2[ 150:200, 0:200 ]
@@ -63,7 +63,7 @@ def quantize( image, n ):
     f = cv2.convertScaleAbs( im2 )
     return f
 def dominant( image, mask ):     #Dominant colors, with a mask! (tm)
-    pdata = image.reshape( ( image.shape[ 0 ] * image.shape[ 1 ], 3 ) ))
+    pdata = image.reshape( ( image.shape[ 0 ] * image.shape[ 1 ], 3 ) )
     omask = mask.reshape( ( mask.shape[ 0 ] * mask.shape[ 1 ], 1 ) )
     data = []
     for i in range( 0, len( pdata ) ):
