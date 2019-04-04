@@ -1,11 +1,26 @@
 import cv2
 import sys
 import numpy as np
-from sklearn.cluster import KMeans
+#from sklearn.cluster import KMeans
 
 import time #temp
 
 def main():
+    global colorDict
+    colorDict = {}
+    filename = 'dependencies/color_hexes.txt'
+    try:
+        file = open(filename, "r")
+        lines = file.readlines()
+        for line in lines:
+            [color, rgb] = line.split(" ")
+            r = int(rgb[0:2],16)
+            g = int(rgb[2:4],16)
+            b = int(rgb[4:6],16)
+            colorDict[color.strip()] = [r,g,b]
+        file.close()
+    except:
+        print("File not found")
     print( "targetIsolation.py is being run independently, continuing with default image" )
     try:
         gimg = cv2.imread( "dependencies/generictarget2.jpg" )
@@ -13,6 +28,43 @@ def main():
         print( "Error: Dependency missing: generictarget2.png" )
         sys.exit( 0 )
     cv2.imwrite( "output.png", isolateTargetUnique( gimg ) )
+    print(type(isolated))
+    print(dominantColor(isolated))
+
+def detectColor(pixel):
+    global colorDict
+    [b,g,r] = pixel
+    closestColor = ""
+    closestDistance = float("inf")
+    for color in colorDict:
+        dist = 0
+        dist += abs(colorDict[color][0]-r)
+        dist += abs(colorDict[color][1]-g)
+        dist += abs(colorDict[color][2]-b)
+        if dist < closestDistance:
+            closestDistance = dist
+            closestColor = color
+    return closestColor
+
+def dominantColor(image):
+    global colorDict
+    colorCount = {}
+    for a in range(len(image)):
+        for b in range(len(image[0])):
+            pixel = image[a][b]
+            color = detectColor(pixel)
+            if color in colorCount:
+                colorCount[color] += 1
+            else:
+                colorCount[color] = 1
+#            print(color)
+    maxcolor = ""
+    maxnum = -1
+    for color in colorCount:
+        if colorCount[color] > maxnum:
+            maxnum = colorCount[color]
+            maxcolor = color
+    return maxcolor
 
 def isolateTargetUnique( croppedimage ):
     #Scales image
