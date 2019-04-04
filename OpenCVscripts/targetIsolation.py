@@ -4,20 +4,22 @@ import sys
 import numpy as np
 
 #Various setups
-kern = np.ones( ( 3, 3 ), np.uint8 )
+kern = np.ones( ( 1, 1 ), np.uint8 )
 
 def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    isolated, targetmask = isolateTargetUnique( cv2.imread( "dependencies/generictarget2.jpg" ) )
-    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominant( cv2.blur( cv2.dilate( isolated, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
+    isolatedLetter = isolateLetter( isolated, targetmask )
+    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
     print( shapeColorAlpha )
+
 #def getProperties( roi ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
 #    checkDependencies()
 
 #Dependencies Checker
-maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg"]   #Dependencies required when running independently
+maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg", "generictarget4.jpg" ]   #Dependencies required when running independently
 dependencies = [ "color_hexes.txt" ]                            #Independencies always in use
 def checkDependencies():
     global dependencies
@@ -37,22 +39,28 @@ def checkMainDependencies():
             sys.exit( 1 )
 
 #Isolation methods
-def isolateTargetUnique( croppedimage ):
+def isolateTarget( croppedimage ):
     #Scales image
-    scaledimg = cv2.resize( croppedimage, ( 200, 200 ) )
+    scaledimg = cv2.resize( croppedimage, ( 400, 400 ) )
     #Quantization
     scaledimg2 = quantize( scaledimg, 16 )
     #Target isolation
-    crop1 = scaledimg2[ 0:50, 0:200 ]
-    crop2 = scaledimg2[ 150:200, 0:200 ]
+    crop1 = scaledimg2[ 0:100, 0:400 ]
+    crop2 = scaledimg2[ 300:400, 0:400 ]
     unsortedcolors = np.concatenate( ( crop1, crop2 ) )
     onedunsort = unsortedcolors.reshape( ( unsortedcolors.shape[ 0 ] * unsortedcolors.shape[ 1 ], 3 ) )
     colors = np.unique( onedunsort, axis = 0 )
-    targetcrop = scaledimg2[ 50:150, 50:150 ]
-    fmask = np.zeros( ( 100, 100 ), dtype = np.uint8 )
+    targetcrop = scaledimg2[ 100:300, 100:300 ]
+    fmask = np.zeros( ( 200, 200 ), dtype = np.uint8 )
     for color in colors:
         fmask = cv2.bitwise_or( cv2.inRange( targetcrop, color, color ), fmask )
-    return [ cv2.bitwise_and( scaledimg[ 50:150, 50:150 ], scaledimg[ 50:150, 50:150 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
+    return [ cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
+def isolateLetter( target, mask ):
+    dilmask = cv2.erode( mask, kern, iterations = 10 )
+    target = quantize( target, 2 )
+    domcolor = dominantKMeans( target, dilmask )
+    print( domcolor )
+    return cv2.inRange( target, domcolor, domcolor )
 def quantize( image, n ):
     indices = np.arange( 0, 256 )
     divider = np.linspace( 0, 255, n + 1 )[ 1 ]
@@ -62,7 +70,7 @@ def quantize( image, n ):
     im2 = palette[ cv2.bitwise_and( image, image ) ]
     f = cv2.convertScaleAbs( im2 )
     return f
-def dominant( image, mask ):     #Dominant colors, with a mask! (tm)
+def dominantKMeans( image, mask ):     #Dominant colors, with a mask! (tm)
     pdata = image.reshape( ( image.shape[ 0 ] * image.shape[ 1 ], 3 ) )
     omask = mask.reshape( ( mask.shape[ 0 ] * mask.shape[ 1 ], 1 ) )
     data = []
@@ -75,6 +83,24 @@ def dominant( image, mask ):     #Dominant colors, with a mask! (tm)
     flags = cv2.KMEANS_RANDOM_CENTERS
     compactness,labels,centers = cv2.kmeans( f, 1, None, criteria, 10, flags)
     return( centers[ 0 ].astype( np.uint8 ) )
+'''def dominantSimple( image, mask ):
+    colorCount = []
+    for x in range( len( image ) ):
+        for y in range( len( image[ 0 ] ) ):
+            if mask[ x ][ y ] == 0:
+                continue
+            color = image[ x ][ y ]
+            if color in colorCount:
+                colorCount[ color ] += 1
+            else:
+                colorCount.append( [ ] )
+    maxcolor = ""
+    maxnum = -1
+    for color in colorCount:
+        if colorCount[ color ] > maxnum:
+            maxnum = colorCount[ color ]
+            maxcolor = color
+    return maxcolor'''
 def hsv2name( hsv ):    #Opencv h value is 0->180, not 0->360
     h = hsv[ 0 ][ 0 ][ 0 ]
     s = hsv[ 0 ][ 0 ][ 1 ]
