@@ -27,9 +27,10 @@ def main():
     except:
         print( "Error: Dependency missing: generictarget2.png" )
         sys.exit( 0 )
-    cv2.imwrite( "output.png", isolateTargetUnique( gimg ) )
+    [fmask,isolated] = isolateTargetUnique( gimg )
+    cv2.imwrite( "output.png", isolated )
     print(type(isolated))
-    print(dominantColor(isolated))
+    print(dominantColor(isolated,fmask))
 
 def detectColor(pixel):
     global colorDict
@@ -46,11 +47,13 @@ def detectColor(pixel):
             closestColor = color
     return closestColor
 
-def dominantColor(image):
+def dominantColor(image,fmask):
     global colorDict
     colorCount = {}
     for a in range(len(image)):
         for b in range(len(image[0])):
+            if fmask[a][b] == 0:
+                continue
             pixel = image[a][b]
             color = detectColor(pixel)
             if color in colorCount:
@@ -88,6 +91,6 @@ def isolateTargetUnique( croppedimage ):
     fmask = np.zeros( ( 100, 100 ), dtype = np.uint8 )
     for color in colors:
         fmask = cv2.bitwise_or( cv2.inRange( targetcrop, color, color ), fmask )
-    return cv2.bitwise_and( scaledimg[ 50:150, 50:150 ], scaledimg[ 50:150, 50:150 ], mask = cv2.bitwise_not( fmask ) )
+    return [cv2.bitwise_not(fmask),cv2.bitwise_and( scaledimg[ 50:150, 50:150 ], scaledimg[ 50:150, 50:150 ], mask = cv2.bitwise_not( fmask ) )]
 if( __name__ == "__main__" ):
     main()
