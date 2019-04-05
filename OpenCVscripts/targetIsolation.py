@@ -12,21 +12,21 @@ def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
+    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget2.jpg" ) )
     isolatedLetter, letterMask = isolateLetter( isolated, targetmask )
-    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern2, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
     print( "Target Color: " + shapeColorAlpha )
-    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.bitwise_and( isolatedLetter, isolatedLetter, mask = cv2.erode( letterMask, kern2, iterations = 1 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
+    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( quantize( isolatedLetter, 3 ), letterMask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
     print( "Letter Color: " + letterColorAlpha )
-def getProperties( roiCrop ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
+def isolate( roiCrop ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
     checkDependencies()
     shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
     isolatedLetter, maskLetter = isolateLetter( shapewithmask, targetmask )
-    shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
-    lettercolor = letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.bitwise_and( isolatedLetter, isolatedLetter, mask = cv2.erode( letterMask, kern2, iterations = 1 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
-    return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, lettercolor
+    shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( shapewithmask, kern2, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
+    letterColor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( quantize( isolatedLetter, 3 ), maskLetter ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
+    return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, letterColor
 #Dependencies Checker
-maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg", "generictarget4.jpg" ]   #Dependencies required when running independently
+maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg", "generictarget4.jpg", "generictarget5.jpg" ]   #Dependencies required when running independently
 dependencies = [ "color_hexes.txt" ]                            #Independencies always in use
 def checkDependencies():
     global dependencies
@@ -116,7 +116,7 @@ def hsv2name( hsv ):    #Opencv h value is 0->180, not 0->360
     h = hsv[ 0 ][ 0 ][ 0 ]
     s = hsv[ 0 ][ 0 ][ 1 ]
     v = hsv[ 0 ][ 0 ][ 2 ]
-    if s < 15: #Low Saturation
+    if s < 25: #Low Saturation
         if v < 30: #Low Value
             return( "Black" )
         elif v < 200: #Mid Value
