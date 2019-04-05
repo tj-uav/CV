@@ -6,22 +6,27 @@ from sklearn.cluster import MiniBatchKMeans
 
 #Various setups
 kern = np.ones( ( 3, 3 ), np.uint8 )
+kern2 = np.ones( ( 2, 2 ), np.uint8 )
 
 def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
-    isolatedLetter = isolateLetter( isolated, targetmask )
-    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
+    isolatedLetter, letterMask = isolateLetter( isolated, targetmask )
+    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
     print( "Target Color: " + shapeColorAlpha )
-    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolatedLetter, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
+    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.bitwise_and( isolatedLetter, isolatedLetter, mask = cv2.erode( letterMask, kern2, iterations = 1 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
     print( "Letter Color: " + letterColorAlpha )
-#def getProperties( roi ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
-#    checkDependencies()
-
+def getProperties( roiCrop ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
+    checkDependencies()
+    shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
+    isolatedLetter, maskLetter = isolateLetter( shapewithmask, targetmask )
+    shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    lettercolor = letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.bitwise_and( isolatedLetter, isolatedLetter, mask = cv2.erode( letterMask, kern2, iterations = 1 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
+    return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, lettercolor
 #Dependencies Checker
-maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg" ]   #Dependencies required when running independently
+maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg", "generictarget4.jpg" ]   #Dependencies required when running independently
 dependencies = [ "color_hexes.txt" ]                            #Independencies always in use
 def checkDependencies():
     global dependencies
@@ -43,7 +48,7 @@ def checkMainDependencies():
 #Isolation methods
 def isolateTarget( croppedimage ):
     #Scales image
-    scaledimg = cv2.resize( croppedimage, ( 400, 400 ) )
+    scaledimg = cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC )
     #Quantization
     scaledimg2 = quantize( scaledimg, 16 )
     #Target isolation
@@ -56,14 +61,14 @@ def isolateTarget( croppedimage ):
     fmask = np.zeros( ( 200, 200 ), dtype = np.uint8 )
     for color in colors:
         fmask = cv2.bitwise_or( cv2.inRange( targetcrop, color, color ), fmask )
-    return [ cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
+    return [ targetcrop, cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
 def isolateLetter( target, mask ):
     ori = target
     target = kMeansQuantize( target, 3 )    #Black background counts as one
     domcolor = dominantSimple( target, mask )
     target = cv2.bitwise_not( cv2.inRange( target, domcolor, domcolor ), mask = mask )
     target = cv2.bitwise_and( cv2.dilate( cv2.erode( target, kern, iterations = 2 ), kern, iterations = 3 ), target )
-    return cv2.bitwise_and( ori, ori, mask = target )
+    return cv2.bitwise_and( ori, ori, mask = target ), target
 def quantize( image, n ):
     indices = np.arange( 0, 256 )
     divider = np.linspace( 0, 255, n + 1 )[ 1 ]
