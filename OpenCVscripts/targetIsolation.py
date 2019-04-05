@@ -11,11 +11,12 @@ def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget2.jpg" ) )
+    isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
     isolatedLetter = isolateLetter( isolated, targetmask )
     shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
-    print( shapeColorAlpha )
-
+    print( "Target Color: " + shapeColorAlpha )
+    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolatedLetter, kern, iterations = 3 ), ( 5, 5 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
+    print( "Letter Color: " + letterColorAlpha )
 #def getProperties( roi ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
 #    checkDependencies()
 
@@ -58,11 +59,10 @@ def isolateTarget( croppedimage ):
     return [ cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
 def isolateLetter( target, mask ):
     ori = target
-    dilmask = cv2.erode( mask, kern, iterations = 7 )
     target = kMeansQuantize( target, 3 )    #Black background counts as one
-    domcolor = dominantSimple( target, dilmask )
+    domcolor = dominantSimple( target, mask )
     target = cv2.bitwise_not( cv2.inRange( target, domcolor, domcolor ), mask = mask )
-    #cv2.imwrite( "output.png", cv2.bitwise_and( ori, ori, mask = target ) )
+    target = cv2.bitwise_and( cv2.dilate( cv2.erode( target, kern, iterations = 2 ), kern, iterations = 3 ), target )
     return cv2.bitwise_and( ori, ori, mask = target )
 def quantize( image, n ):
     indices = np.arange( 0, 256 )
