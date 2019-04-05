@@ -12,19 +12,21 @@ def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget2.jpg" ) )
+    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
     isolatedLetter, letterMask = isolateLetter( isolated, targetmask )
-    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( isolated, kern2, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( cv2.blur( cv2.dilate( quantize( isolated, 6 ), kern2, iterations = 2 ), ( 2, 2 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
     print( "Target Color: " + shapeColorAlpha )
-    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( quantize( isolatedLetter, 3 ), letterMask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
+    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( quantize( isolatedLetter, 5 ), kern2, iterations = 1 ), ( 3, 3 ) ), letterMask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
     print( "Letter Color: " + letterColorAlpha )
 def isolate( roiCrop ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
     checkDependencies()
     shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
     isolatedLetter, maskLetter = isolateLetter( shapewithmask, targetmask )
-    shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( shapewithmask, kern2, iterations = 2 ), ( 3, 3 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
-    letterColor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( quantize( isolatedLetter, 3 ), maskLetter ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
+    shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( cv2.blur( cv2.dilate( quantize( shapewithmask, 6 ), kern2, iterations = 2 ), ( 2, 2 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
+    letterColor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( cv2.blur( cv2.dilate( quantize( isolatedLetter, 5 ), kern2, iterations = 1 ), ( 3, 3 ) ), maskLetter ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
     return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, letterColor
+def crop( image, targetcoords ):
+    return image[ ( targetcoords[ 1 ] - 200 ):( targetcoords[ 1 ] + 200 ), ( targetcoords[ 0 ] - 200 ):( targetcoords[ 0 ] + 200 ) ]
 #Dependencies Checker
 maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg", "generictarget4.jpg", "generictarget5.jpg" ]   #Dependencies required when running independently
 dependencies = [ "color_hexes.txt" ]                            #Independencies always in use
@@ -47,8 +49,9 @@ def checkMainDependencies():
 
 #Isolation methods
 def isolateTarget( croppedimage ):
+    ori = croppedimage
     #Scales image
-    scaledimg = cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC )
+    scaledimg = cv2.blur( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), ( 3, 3 ) )
     #Quantization
     scaledimg2 = quantize( scaledimg, 16 )
     #Target isolation
@@ -61,7 +64,7 @@ def isolateTarget( croppedimage ):
     fmask = np.zeros( ( 200, 200 ), dtype = np.uint8 )
     for color in colors:
         fmask = cv2.bitwise_or( cv2.inRange( targetcrop, color, color ), fmask )
-    return [ targetcrop, cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
+    return [ ori, cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
 def isolateLetter( target, mask ):
     ori = target
     target = kMeansQuantize( target, 3 )    #Black background counts as one
@@ -99,7 +102,7 @@ def dominantKMeans( image, mask ):     #Dominant colors, with a mask! (tm)
             data.append( pdata[ i ] )
     data = np.array( data )
     f = np.float32( data )
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0 )
+    criteria = ( cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0 )
     flags = cv2.KMEANS_RANDOM_CENTERS
     compactness,labels,centers = cv2.kmeans( f, 1, None, criteria, 10, flags)
     return( centers[ 0 ].astype( np.uint8 ) )
@@ -127,7 +130,7 @@ def hsv2name( hsv ):    #Opencv h value is 0->180, not 0->360
         if 165 < h or h < 8:    #Red
             return( "Red" )
         elif h < 17:            #Orange/Brown
-            if v < 220:
+            if v < 180:
                 return( "Brown" )
             else:
                 return( "Orange" )

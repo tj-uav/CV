@@ -7,18 +7,18 @@ import numpy as np
 import imutils
 
 
-videopath = "C:/Users/zz198/Desktop/RC/testvideos/whitesquaregopro1.mp4"				#small laptop
+#videopath = "C:/Users/zz198/Desktop/RC/testvideos/whitesquaregopro1.mp4"				#small laptop
 #videopath = "C:/Users/zz198/Desktop/RC/testvideos/whiteTriangle_Trim.mp4"
 
 #videopath = "C:/Users/zz198/Desktop/PatrickP/RC/CV/whiteTriangle_Trim.mp4"				#laptank
-cap = cv2.VideoCapture(videopath)
-
+#cap = cv2.VideoCapture(videopath)
+frame = cv2.imread( "/home/alexander/Desktop/DSC03060.JPG")
 triangle_cascade = cv2.CascadeClassifier("triangledata/cascade10.xml")
 
 detected = 0
 
 while True:
-	ret,frame = cap.read()
+	#ret,frame = cap.read()
 	frame = imutils.resize(frame,width=1067,height=600)
 	#frame = imutils.resize(frame,width = 146,height = 86)						#raw is 364,216
 	#frame = imutils.resize(frame,width = 80,height = 50)						#for pentagon
