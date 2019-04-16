@@ -1,0 +1,6 @@
+[0, 0, 0] Yellow
+[0, 20, 0] Blue
+[0, 40, 0] Yellow
+[0, 60, 0] Blue
+[0, 80, 0] Brown
+[0, 100, 0] Brown

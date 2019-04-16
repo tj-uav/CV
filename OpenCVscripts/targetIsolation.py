@@ -12,12 +12,32 @@ def main():
     checkDependencies()
     checkMainDependencies()
     print( "targetIsolation.py is being run independently, continuing with default image" )
-    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget.jpg" ) )
+    original, isolated, targetmask = isolateTarget( cv2.imread( "dependencies/generictarget2.jpg" ) )
     isolatedLetter, letterMask = isolateLetter( isolated, targetmask )
-    shapeColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( cv2.blur( cv2.dilate( quantize( isolated, 6 ), kern2, iterations = 2 ), ( 2, 2 ) ), targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    isolated_blurred = cv2.blur( cv2.dilate( quantize( isolated, 6 ), kern2, iterations = 2 ), ( 2, 2 ) )
+    isolated_toalpha = np.array( [ np.array( [ dominantSimple( isolated_blurred , targetmask ) ] ) ] )
+    shapeColorAlpha = hsv2name( cv2.cvtColor( isolated_toalpha , cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
     print( "Target Color: " + shapeColorAlpha )
     letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( quantize( isolatedLetter, 5 ), kern2, iterations = 1 ), ( 3, 3 ) ), letterMask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
     print( "Letter Color: " + letterColorAlpha )
+    print(isolated_toalpha[0][0])
+    print(isolated_toalpha)
+
+#Used in letterIsolateClassify.py
+def getLetter(filename):
+    original, isolated, targetmask = isolateTarget( cv2.imread( filename ) )
+    isolatedLetter, letterMask = isolateLetter( isolated, targetmask )
+    isolated_blurred = cv2.blur( cv2.dilate( quantize( isolated, 6 ), kern2, iterations = 2 ), ( 2, 2 ) )
+    isolated_toalpha = np.array( [ np.array( [ dominantSimple( isolated_blurred , targetmask ) ] ) ] )
+    shapeColorAlpha = hsv2name( cv2.cvtColor( isolated_toalpha , cv2.COLOR_BGR2HSV ) )   #AAAAAHHHHHHHHHHH
+    print( "Target Color: " + shapeColorAlpha )
+    letterColorAlpha = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantKMeans( cv2.blur( cv2.dilate( quantize( isolatedLetter, 5 ), kern2, iterations = 1 ), ( 3, 3 ) ), letterMask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )   #NO GO AWAY FOUL BEAST
+    print( "Letter Color: " + letterColorAlpha )
+    print(isolated_toalpha[0][0])
+    print(isolated_toalpha)
+    return isolatedLetter
+
+
 def isolate( roiCrop ):    #Nonmain method of getting things #Need to complete, this'll be the method used in competition
     checkDependencies()
     shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
@@ -142,6 +162,43 @@ def hsv2name( hsv ):    #Opencv h value is 0->180, not 0->360
             return( "Blue" )
         else:
             return( "Purple" )
+
+def bgr2name( bgr ):
+    [b,g,r] = bgr[0][0]
+    if max(abs(b-r),abs(b-g),abs(g-r)) < 50: #Distance between r,g,b values is less than 50
+        avg = (b+r+g)/3
+        if avg < 80:
+            return ( "Black" )
+        elif avg < 160:
+            return ( "Gray" )
+        else:
+            return ( "White" )
+    if r > 175: #High red value:
+        if g < 60:
+            if b < 70:
+                return ( "Red" )
+            else:
+                return ( "Purple" )
+        elif g > 200:
+             return ( "Yellow" )
+        else:
+             return ( "Orange" )
+    elif r > 100:
+        if g < 80 and b < 80:
+            return ( "Brown" )
+    if b > 200 and r > 200 and g > 200:
+        return( "White" )
+    if b > 200 and r > 200 and g > 200:
+        return( "White" )
+    if b > 200 and r > 200 and g > 200:
+        return( "White" )
+    if b > 200 and r > 200 and g > 200:
+        return( "White" )
+    if b > 200 and r > 200 and g > 200:
+        return( "White" )
+
+
+
 #Starts main if run independently
 if( __name__ == "__main__" ):
     main()
