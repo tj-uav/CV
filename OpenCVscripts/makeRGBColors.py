@@ -31,14 +31,20 @@ for key in dict:
 #T.pack()
 #L.pack()
 
-output = open("RGB_Names.txt","w")
+output = open("RGB_Names.txt","a")
+inputFile = open("RGB_Names.txt","r")
+length = len(inputFile.readlines())
 currR = 0
 currG = 0
 currB = 0
+count = 0
 print('hi')
 for r in range(0,255,20):
     for b in range(0,255,20):
         for g in range(0,255,20):
+            if count < length:
+                count += 1
+                continue
             print(r,g,b)
             currR = r
             currB = b
