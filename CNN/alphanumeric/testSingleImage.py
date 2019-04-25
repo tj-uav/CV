@@ -31,12 +31,18 @@ def main():
     model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
     print('Starting')
 
+    bufferFraction = 0.25
     #Choose Image file here
-    img = cv2.imread("E.png")
-    img = cv2.resize(img,(height,width))
+    img = cv2.imread("C:/Users/Srikar/Downloads/w_new.png")
     img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     ret,img = cv2.threshold(img,120,255,cv2.THRESH_BINARY)
-    img = cv2.erode(img, np.ones((3,3),np.uint8))
+    contours,ret = cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    cnt = max(contours, key = lambda c: cv2.contourArea(c))
+    x,y,w,h = cv2.boundingRect(cnt)
+    img = img[y - int(h * bufferFraction): y + h + int(h * bufferFraction), x - int(w * bufferFraction):x + w + int(w * bufferFraction)]
+
+    img = cv2.resize(img,(height,width))
+#    img = cv2.erode(img, np.ones((3,3),np.uint8))
     for angle in range(0,360,20):
         rotated = imutils.rotate(img,angle)
         temp = rotated / 255
