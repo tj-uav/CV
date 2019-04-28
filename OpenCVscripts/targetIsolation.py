@@ -17,13 +17,17 @@ def main():
 
 #Used in letterIsolateClassify.py
 def getLetter(filename):    #Lazy version of isolate(), outputs the isolated letter
-    image,shape,targetmask,letter,lettermask,shapecolor,lettercolor = isolate( isolateTarget( cv2.imread( filename ) ) )
+    image,shape,targetmask,letter,lettermask,shapecolor,lettercolor = isolate( cv2.imread( filename ) )
     return letter
 
 def isolate( roiCrop ):    #Full return
-    checkDependencies()
+#    checkDependencies()
     shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
     isolatedLetter, maskLetter = isolateLetter( shapewithmask, targetmask )
+    cv2.imshow("Ioso",shapewithmask)
+    cv2.imshow("Ioso1",isolatedLetter)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( shapewithmask, targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
     letterColor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( isolatedLetter, maskLetter ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
     return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, letterColor
@@ -69,13 +73,22 @@ def isolateTarget( croppedimage ):
     for color in colors:
         fmask = cv2.bitwise_or( cv2.inRange( targetcrop, color, color ), fmask )
     return [ ori, cv2.bitwise_and( scaledimg[ 100:300, 100:300 ], scaledimg[ 100:300, 100:300 ], mask = cv2.bitwise_not( fmask ) ), cv2.bitwise_not( fmask ) ]
+
+def srikarMethod (target, mask):
+    for i in range(len(mask)):
+        for j in range(len(mask[0])):
+            print('hi')
+
 def isolateLetter( target, mask ):
     ori = target
+    srikarMethod(target, mask)
     target = kMeansQuantize( target, 3 )    #Black background counts as one
     domcolor = dominantSimple( target, mask )
-    mask = cv2.erode( cv2.dilate( mask, kern, iterations = 1 ), kern, iterations = 6 )
-    target = cv2.bitwise_and( target, target, mask = mask )
+    mask = cv2.erode(cv2.dilate(mask, kern, iterations=1), kern, iterations=5)
+#    mask = cv2.dilate(mask, kern, iterations=1)
+    target = cv2.bitwise_and(target, target, mask=mask)
     target = cv2.bitwise_not( cv2.inRange( target, domcolor, domcolor ), mask = mask )
+#    target = cv2.bitwise_and(cv2.dilate(cv2.erode(target, kern, iterations=2), kern, iterations=3), target)
     return cv2.bitwise_and( ori, ori, mask = target ), target
 def quantize( image, n ):
     indices = np.arange( 0, 256 )

@@ -18,7 +18,7 @@ output_map.extend(digits_map)
 output_map.extend(alpha_map)
 
 bufferFraction = 0.25
-isolatedLetter = targetIsolation.getLetter("OpenCVscripts/dependencies/generictarget2.jpg")
+isolatedLetter = targetIsolation.getLetter("OpenCVscripts/dependencies/generictarget3.jpg")
 _, threshLetter = cv2.threshold(cv2.cvtColor(isolatedLetter, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
 contours, _ = cv2.findContours(threshLetter, 1, 1)
 cnt = max(contours,key = lambda c: cv2.contourArea(c))
