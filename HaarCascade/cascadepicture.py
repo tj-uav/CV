@@ -7,8 +7,20 @@ import numpy as np
 import imutils
 import time
 
+def quantize( image, n ):
+    indices = np.arange( 0, 256 )
+    divider = np.linspace( 0, 255, n + 1 )[ 1 ]
+    quantiz = np.int0( np.linspace( 0, 255, n ) )
+    color_levels = np.clip( np.int0( indices / divider ), 0, n - 1 )
+    palette = quantiz[ color_levels ]
+    im2 = palette[ cv2.bitwise_and( image, image ) ]
+    f = cv2.convertScaleAbs( im2 )
+    return f
 
-frame = cv2.imread( "C:/Users/zz198/Desktop/tj-uav/CV/OpenCVscripts/dependencies/whitetriangle1.png")
+frame = cv2.imread( "C:/Users/zz198/Desktop/tj-uav/CV/OpenCVscripts/dependencies/generictarget.jpg")
+kern = np.ones( ( 3, 3 ), np.uint8 )
+frame = quantize( frame, 8 )
+frame = cv2.erode( cv2.dilate( frame, kern, iterations = 3 ), kern, iterations = 3 )
 triangle_cascade = cv2.CascadeClassifier("triangledata/cascade10.xml")
 
 detected = 0
