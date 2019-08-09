@@ -1,7 +1,7 @@
 ##Ensure your CV_DATA folder exists with relative path ../../CV_DATA
 
 #Start variables
-imagesToGenerate = 1
+imagesToGenerate = 10
 
 #Imports
 import cv2
@@ -59,4 +59,4 @@ for i in range( 0, imagesToGenerate ):
     back = cv2.bitwise_and( back, back, mask = shapmask_inv )
     back = cv2.add( back, shap )
 
-    cv2.imwrite( "a.png", back )
+    cv2.imwrite( "data/" + str( i ) + ".png", back )
