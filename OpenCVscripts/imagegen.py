@@ -12,10 +12,12 @@ from random import randint
 import imutils
 import time
 
+#path = '../../CV_DATA/'
+path = 'dependencies/'
 #Find and load files used for generation into memory
-samples = [ cv2.imread( "../../CV_DATA/groundtextures/" + str( i ) ) for i in listdir( "../../CV_DATA/groundtextures/" ) if isfile( join( "../../CV_DATA/groundtextures/", i ) ) ]
-letters = [ cv2.imread( "../../CV_DATA/letterpatterns/" + str( i ) ) for i in listdir( "../../CV_DATA/letterpatterns/" ) if isfile( join( "../../CV_DATA/letterpatterns/", i ) ) ]
-shapes = [ cv2.imread( "../../CV_DATA/shapepatterns/" + str( i ) ) for i in listdir( "../../CV_DATA/shapepatterns/" ) if isfile( join( "../../CV_DATA/shapepatterns/", i ) ) ]
+samples = [ cv2.imread( path + "groundtextures/" + str( i ) ) for i in listdir( path + "groundtextures/" ) if isfile( join( path + "groundtextures/", i ) ) ]
+letters = [ cv2.imread( path + "letterpatterns/" + str( i ) ) for i in listdir( path + "letterpatterns/" ) if isfile( join( path + "letterpatterns/", i ) ) ]
+shapes = [ cv2.imread( path + "shapepatterns/" + str( i ) ) for i in listdir( path + "shapepatterns/" ) if isfile( join( path + "shapepatterns/", i ) ) ]
 
 #Generate Images
 for i in range( 0, imagesToGenerate ):
