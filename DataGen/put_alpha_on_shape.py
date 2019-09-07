@@ -38,11 +38,10 @@ def border(img, goal_width, goal_height):
     return cv2.copyMakeBorder(img, top=border_top, bottom=border_bottom, left=border_left, right=border_right, borderType=cv2.BORDER_CONSTANT, value=[0])
 
 
-def processes(img):
+def process(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     thresh_img = thresh(gray)
-    _, cnts, hierarchy = cv2.findContours(
-        thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cnts, _ = cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     cnt = max(cnts, key=lambda c: cv2.contourArea(c))
     x, y, w, h = cv2.boundingRect(cnt)
     return thresh_img[y:y+h, x:x+w]
@@ -88,9 +87,9 @@ def moveFromCenter(thresh, center):
 
 def stack(alpha, shape, angle):
     alpha_img = cv2.imread('Alphas/' + alpha + '.png')
-    alpha_thresh = processes(alpha_img)
+    alpha_thresh = process(alpha_img)
     shape_img = cv2.imread('Shapes/' + shape + '.png')
-    shape_thresh = processes(shape_img)
+    shape_thresh = process(shape_img)
     if alpha_thresh.shape[1] > alpha_thresh.shape[0]:
         alpha_thresh = imutils.resize(
             alpha_thresh, width=shape_thresh.shape[1])
