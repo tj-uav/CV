@@ -1,0 +1,1 @@
+keras - version 2.1.6 (ValueError when working with 2.2.4)
