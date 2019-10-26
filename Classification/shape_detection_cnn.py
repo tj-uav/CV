@@ -7,8 +7,8 @@ import os, sys, time
 import cv2
 
 # Add to Python path temporarily
-sys.path.insert(1, '/home/jasonc/windows/Jason/UAV/CV/')
-img_path = '/home/jasonc/windows/Jason/UAV/CV/DataGen/AlphaShapeData/'
+# sys.path.insert(1, '/home/jasonc/windows/Jason/UAV/CV/')
+img_path = 'C:/Users/Ron/Desktop/Files/UAV Fly Pics/'
 
 # Hyperparamters
 EPOCHS = 1000
@@ -95,7 +95,7 @@ def main():
     # Preprocessing
     
 
-    img = cv2.imread(img_path + 'circle_5.png')
+    img = cv2.imread(img_path + 'IMG-7766.jpg')
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, threshold = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
     blur = cv2.GaussianBlur(threshold, (5, 5), 1)
