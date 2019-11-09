@@ -1,4 +1,7 @@
-import cv2, numpy as np, time, os
+import cv2
+import numpy as np
+import time
+import os
 from matplotlib import pyplot as plt
 
 
@@ -48,7 +51,7 @@ def saveContours(contours, filepath):
 start = time.time()
 directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/"
 fileSaveString = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img"
-imageName = "Frame78"
+imageName = "Frame103"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
@@ -56,14 +59,44 @@ minimumContourPoints = 4
 
 image = cv2.imread(directoryString + imageName + imageExtension)
 og = image.copy()
+originalY, originalX, _ = og.shape
 
+cv2.imshow("og", og)
+cv2.waitKey(0)
+
+smallImage = image.resize(int(originalY/4), int(originalX/4))
+cv2.imshow("small", smallImage)
+average = smallImage.mean(axis=0).mean(axis=0)
+pixels = np.float32(smallImage.reshape(-1, 3))
+n_colors = 5
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, .1)
+flags = cv2.KMEANS_RANDOM_CENTERS
+_, labels, palette = cv2.kmeans(pixels, n_colors, None, criteria, 10, flags)
+_, counts = np.unique(labels, return_counts=True)
+dominant = palette[np.argmax(counts)]
+avg_patch = np.ones(shape=smallImage.shape, dtype=np.uint8)*np.uint8(average)
+indices = np.argsort(counts)[::-1]
+freqs = np.cumsum(np.hstack([[0], counts[indices]/counts.sum()]))
+rows = np.int_(smallImage.shape[0]*freqs)
+dom_patch = np.zeros(shape=smallImage.shape, dtype=np.uint8)
+for i in range(len(rows) - 1):
+    dom_patch[rows[i]:rows[i + 1], :, :] += np.uint8(palette[indices[i]])
+fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12,6))
+ax0.imshow(avg_patch)
+ax0.set_title('Average color')
+ax0.axis('off')
+ax1.imshow(dom_patch)
+ax1.set_title('Dominant colors')
+ax1.axis('off')
+plt.show(fig)
+time.sleep(1000)
 
 print("Preprocessing")
-originalY, originalX, _ = og.shape
 currY, currX = 700, 1200
 image = cv2.resize(image, (1200, 700))
 image2 = image.copy()
 ogResized = image.copy()
+ogResized2 = image.copy()
 cv2.imshow("Original Image (M2)", cv2.resize(image, (1200, 700)))
 
 pixels = np.float32(image.reshape(-1, 3))
@@ -81,7 +114,6 @@ image = res
 threshold = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
 contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 print("Number of contours found:", len(contours))
-os.chdir(directoryString)
 count = 0
 newContours = []
 for cnt in contours:
@@ -97,6 +129,8 @@ saveContours(newContours, fileSaveString)
 print("Number of Contours Drawn and Saved:", count)
 print(time.time() - start)
 cv2.imshow("Drawn Contours (M2)", ogResized)
+os.chdir(directoryString)
+cv2.imwrite(imageName + "ConcatColor.jpg", np.concatenate((np.concatenate((ogResized2, res)), ogResized)))
 cv2.waitKey(0)
 
 

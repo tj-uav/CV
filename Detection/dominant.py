@@ -1,12 +1,12 @@
 import cv2
 import numpy as np
 
-img = cv2.imread("C:/Users/Srikar/Documents/UAV/Data/Images/GP010231/image47.png")
+img = cv2.imread("C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/Frame91.jpg")
 og = img.copy()
 pixels = np.float32(cv2.resize(img, (600 // 5, 350 // 5)).reshape(-1, 3))
 
 num_contours = 1000000
-n_colors = 5
+n_colors = 25
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, .1)
 flags = cv2.KMEANS_RANDOM_CENTERS
 
