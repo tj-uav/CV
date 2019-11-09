@@ -1,5 +1,7 @@
 import cv2, numpy as np, time, os
 from matplotlib import pyplot as plt
+import fastai
+from fastai.vision import *
 
 start = time.time()
 directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/"
@@ -7,7 +9,7 @@ imageName = "Frame106"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
-# fileSaveString = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img"
+fileSaveString = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets"
 
 image = cv2.imread(directoryString + imageName + imageExtension)
 og = image.copy()
@@ -19,16 +21,16 @@ currY, currX = 700, 1200
 image = cv2.resize(image, (1200, 700))
 image2 = image.copy()
 ogResized = image.copy()
-cv2.imshow("Original Image (M2)", cv2.resize(image, (1200, 700)))
+# cv2.imshow("Original Image (M2)", cv2.resize(image, (1200, 700)))
 
 print("Thresholding + Contours")
 iter = 1
 num = 30
 while True:
    blurred = cv2.bilateralFilter(image, 30, num, num)
-   cv2.imshow("Blurred", blurred)
+   # cv2.imshow("Blurred", blurred)
    image2 = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
-   cv2.imshow("Grayscale", image2)
+   # cv2.imshow("Grayscale", image2)
    _, threshold = cv2.threshold(image2, 200, 255, cv2.THRESH_BINARY) #Figure out appropriate threshold on image-to-image basis
    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
    print("Number of contours found:", len(contours))
@@ -44,8 +46,7 @@ while True:
          break
       num -= 10
       iter += 1
-os.chdir(directoryString)
-# os.chdir(fileSaveString)
+os.chdir(fileSaveString)
 for cnt in contours:
     approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
     cv2.drawContours(image, [approx], 0, (0), 5)
@@ -87,11 +88,22 @@ for i in range(0, len(contours)):
    scaledMinX = int(minX * originalX / currX)
    scaledMaxX = int(maxX * originalX / currX)
    crop = og[scaledMinY: scaledMaxY, scaledMinX: scaledMaxX]
-   crop = cv2.resize(crop, (len(crop[0])*10, len(crop)*10))
+   # crop = cv2.resize(crop, (len(crop[0])*10, len(crop)*10))
+   crop = cv2.resize(crop, (50, 50))
+
    fileName = "Target" + str(i) + ".png"
-   # cv2.imwrite(fileName, crop)
+   cv2.imwrite(fileName, crop)
 print(time.time() - start)
-cv2.imshow("Drawn Contours (M2)", image)
-cv2.imshow("Final Image (M2)", threshold)
-cv2.imwrite(imageName + "Concat.jpg", np.concatenate((np.concatenate((ogResized, blurred)), np.concatenate((image, cv2.cvtColor(threshold, cv2.COLOR_GRAY2BGR))))))
-cv2.waitKey(0)
+
+classTime = time.time()
+model = load_learner('C:/Users/Ron/Downloads/')
+for pic in os.listdir("C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets"):
+   pic = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets/" + pic
+   img = open_image(pic).resize(256)
+   cat, _, _ = model.predict(image)
+   print(model.predict(image))
+print("Classification Time:", time.time() - classTime)
+# cv2.imshow("Drawn Contours (M2)", image)
+# cv2.imshow("Final Image (M2)", threshold)
+# cv2.imwrite(imageName + "Concat.jpg", np.concatenate((np.concatenate((ogResized, blurred)), np.concatenate((image, cv2.cvtColor(threshold, cv2.COLOR_GRAY2BGR))))))
+# cv2.waitKey(0)
