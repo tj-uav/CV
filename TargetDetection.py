@@ -5,7 +5,7 @@ from fastai.vision import *
 
 start = time.time()
 directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/"
-imageName = "Frame106"
+imageName = "Frame103"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
@@ -96,12 +96,14 @@ for i in range(0, len(contours)):
 print(time.time() - start)
 
 classTime = time.time()
-model = load_learner('C:/Users/Ron/Downloads/')
+learn = load_learner('C:/Users/Ron/Downloads/')
 for pic in os.listdir("C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets"):
    pic = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets/" + pic
+   # cv2.imshow("pic", cv2.imread(pic))
    img = open_image(pic).resize(256)
-   cat, _, _ = model.predict(image)
-   print(model.predict(image))
+   cat, _, _ = learn.predict(img)
+   # print(learn.predict(img))
+   # cv2.waitKey(0)
 print("Classification Time:", time.time() - classTime)
 # cv2.imshow("Drawn Contours (M2)", image)
 # cv2.imshow("Final Image (M2)", threshold)
