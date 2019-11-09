@@ -5,7 +5,7 @@ from fastai.vision import *
 
 start = time.time()
 directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/"
-imageName = "Frame103"
+imageName = "Frame27"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
@@ -102,8 +102,11 @@ for pic in os.listdir("C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/test
    # cv2.imshow("pic", cv2.imread(pic))
    img = open_image(pic).resize(256)
    cat, _, _ = learn.predict(img)
-   # print(learn.predict(img))
-   # cv2.waitKey(0)
+   # print(str(cat))
+   if str(cat) == "bad":
+      os.remove(pic)
+   print(learn.predict(img))
+   cv2.waitKey(0)
 print("Classification Time:", time.time() - classTime)
 # cv2.imshow("Drawn Contours (M2)", image)
 # cv2.imshow("Final Image (M2)", threshold)
