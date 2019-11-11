@@ -4,8 +4,8 @@ import fastai
 from fastai.vision import *
 
 start = time.time()
-directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/"
-imageName = "Frame27"
+directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/MavickFlight/"
+imageName = "BigFlex"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
@@ -19,6 +19,7 @@ print("Preprocessing")
 originalY, originalX, _ = og.shape
 currY, currX = 700, 1200
 image = cv2.resize(image, (1200, 700))
+imageX = image.copy()
 image2 = image.copy()
 ogResized = image.copy()
 # cv2.imshow("Original Image (M2)", cv2.resize(image, (1200, 700)))
@@ -46,12 +47,17 @@ while True:
          break
       num -= 10
       iter += 1
-os.chdir(fileSaveString)
-for cnt in contours:
+
+contourDict = {i:contours[i] for i in range(len(contours))}
+
+for cnt in contourDict:
+    cnt = contourDict[cnt]
     approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
-    cv2.drawContours(image, [approx], 0, (0), 5)
+    cv2.drawContours(imageX, [approx], 0, (0), 5)
     x = approx.ravel()[0]
     y = approx.ravel()[1]
+
+os.chdir(fileSaveString)
 # cv2.imwrite("1list.jpg", image)
 for i in range(0, len(contours)):
    windowName = "Contour " + str(i)
@@ -97,17 +103,27 @@ print(time.time() - start)
 
 classTime = time.time()
 learn = load_learner('C:/Users/Ron/Downloads/')
+count = 0
 for pic in os.listdir("C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets"):
-   pic = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets/" + pic
+   picture = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTargets/" + pic
    # cv2.imshow("pic", cv2.imread(pic))
-   img = open_image(pic).resize(256)
+   img = open_image(picture).resize(256)
    cat, _, _ = learn.predict(img)
    # print(str(cat))
    if str(cat) == "bad":
-      os.remove(pic)
-   print(learn.predict(img))
+      os.remove(picture)
+      contourDict.pop(int(pic[6:pic.find(".")]))
+   # print(learn.predict(img))
    cv2.waitKey(0)
 print("Classification Time:", time.time() - classTime)
+for cnt in contourDict:
+    cnt = contourDict[cnt]
+    approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+    cv2.drawContours(image, [approx], 0, (0), 5)
+    x = approx.ravel()[0]
+    y = approx.ravel()[1]
+cv2.imshow("Contours Before and After", np.concatenate((cv2.resize(imageX, (600, 350)), cv2.resize(image, (600, 350)))))
+cv2.waitKey(0)
 # cv2.imshow("Drawn Contours (M2)", image)
 # cv2.imshow("Final Image (M2)", threshold)
 # cv2.imwrite(imageName + "Concat.jpg", np.concatenate((np.concatenate((ogResized, blurred)), np.concatenate((image, cv2.cvtColor(threshold, cv2.COLOR_GRAY2BGR))))))
