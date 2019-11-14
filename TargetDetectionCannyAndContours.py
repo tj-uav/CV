@@ -4,8 +4,8 @@ import fastai
 from fastai.vision import *
 
 start = time.time()
-directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/MavickFlight/"
-imageName = "BigFlex"
+directoryString = "C:/Users/Ron/Desktop/Files/UAV Fly Pics/Flight2/"
+imageName = "Frame78"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
@@ -13,6 +13,18 @@ fileSaveString = "C:/Users/Ron/UAV/GCS/ManualClassification/assets/img/testTarge
 
 image = cv2.imread(directoryString + imageName + imageExtension)
 og = image.copy()
+
+canny = cv2.Canny(image, 200, 250)
+contours, _ = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+i =0
+while i < len(contours):
+   if len(contours[i]) < 0:
+      contours.pop(i)
+      i -= 1
+   i += 1
+
+cv2.imshow("Test Contours", cv2.drawContours(cv2.cvtColor(np.zeros((700, 1200, 1), dtype = "uint8"), cv2.COLOR_GRAY2BGR), contours, -1, (255, 255, 255), 1))
+cv2.waitKey(0)
 
 
 print("Preprocessing")
@@ -29,11 +41,13 @@ iter = 1
 num = 30
 while True:
    blurred = cv2.bilateralFilter(image, 30, num, num)
+   canny = cv2.Canny(blurred, 200, 255)
+   # cv2.imshow("Canny", canny)
    # cv2.imshow("Blurred", blurred)
    image2 = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
    # cv2.imshow("Grayscale", image2)
    _, threshold = cv2.threshold(image2, 200, 255, cv2.THRESH_BINARY) #Figure out appropriate threshold on image-to-image basis
-   contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+   contours, _ = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
    print("Number of contours found:", len(contours))
    print("Iteration:", iter, "\nValue of n:", num)
 
@@ -48,14 +62,23 @@ while True:
       num -= 10
       iter += 1
 
+contours, _ = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 contourDict = {i:contours[i] for i in range(len(contours))}
+
+contourImage = np.zeros((700, 1200, 1), dtype = "uint8")
 
 for cnt in contourDict:
     cnt = contourDict[cnt]
     approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
-    cv2.drawContours(imageX, [approx], 0, (0), 5)
+    cv2.drawContours(imageX, [approx], 0, 0, 1)
     x = approx.ravel()[0]
     y = approx.ravel()[1]
+contourImage = cv2.drawContours(cv2.cvtColor(contourImage, cv2.COLOR_GRAY2BGR), contours, -1, (255, 255, 255), 1)
+cv2.imshow("Image with contours", imageX)
+cv2.imshow("Canny", canny)
+cv2.imshow("Contours", contourImage)
+cv2.imshow("Combo", cv2.bitwise_and(cv2.cvtColor(contourImage, cv2.COLOR_BGR2GRAY), canny))
+cv2.waitKey(0)
 
 os.chdir(fileSaveString)
 # cv2.imwrite("1list.jpg", image)
@@ -99,7 +122,7 @@ for i in range(0, len(contours)):
 
    fileName = "Target" + str(i) + ".png"
    cv2.imwrite(fileName, crop)
-print(time.time() - start)
+print("Target Detection and Save Time:", time.time() - start)
 
 classTime = time.time()
 learn = load_learner('C:/Users/Ron/Downloads/')
@@ -123,6 +146,7 @@ for cnt in contourDict:
     x = approx.ravel()[0]
     y = approx.ravel()[1]
 cv2.imshow("Contours Before and After", np.concatenate((cv2.resize(imageX, (600, 350)), cv2.resize(image, (600, 350)))))
+cv2.imshow("Combo", np.concatenate((canny, )))
 cv2.waitKey(0)
 # cv2.imshow("Drawn Contours (M2)", image)
 # cv2.imshow("Final Image (M2)", threshold)

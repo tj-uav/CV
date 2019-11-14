@@ -1,6 +1,8 @@
 
 import cv2
 import numpy as np
+import fastai
+from fastai.vision import *
 from sklearn.cluster import MiniBatchKMeans
 
 display_dim = (3840 // 8, 2160 // 8)
@@ -27,13 +29,16 @@ def crop_img(image, bounds, scales=[1,1]):
     scaledMinX = int(minX * scaleX)
     scaledMaxX = int(maxX * scaleX)
     crop = image[scaledMinY: scaledMaxY, scaledMinX: scaledMaxX]
+#    display("Image", image)
+#    display("Crop", crop)
+    cv2.waitKey(0)
     return crop
 
 ## Preprocessing functions
 
 # Image should be BGR
-def bilateral(image, sigma):
-    return cv2.bilateralFilter(image, 30, sigma, sigma)
+def bilateral(image, thresh, sigma):
+    return cv2.bilateralFilter(image, thresh, sigma, sigma)
 
 # Image should be BGR
 def threshold(image, threshold_value, is_gray = False):
@@ -173,4 +178,13 @@ def draw_keypoints(image, keypoints, color=(0,0,255)):
 
 def display(name, img, dim=display_dim):
     cv2.imshow(name, resize(img, dim))
-#    cv2.imwrite("C:/Users/Srikar/Documents/UAV/Data/Images/process.png", resize(img, display_dim))
+
+## ML Functions
+
+def load_model(config):
+    return load_learner(config['learnerLocation'])
+
+def predict(model, imgloc):
+    img = open_image(imgloc).resize(256)
+    cat, _, _ = model.predict(img)
+    return cat
