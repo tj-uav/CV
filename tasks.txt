@@ -1,4 +1,5 @@
-pixhawk comms (telemetry, maybe upload waypoints)
-bullet (gs) comms (video), for anything localization
-odcl (image capturing, gimbal control, image processing, ml algorithms)
-ugv control (linear actuator, deciding when to drop)
+Make ML algorithm faster
+Make detection method faster
+Decrease number of images generated from initial detection method
+Be able to capture images from camera
+Be able to run code on live camera data
