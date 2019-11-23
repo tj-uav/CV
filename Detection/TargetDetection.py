@@ -6,13 +6,14 @@ from detection_methods import *
 config = json.load(open("../config.json"))
 start = time.time()
 directoryString = config["directoryString"]
-imageName = "Frame44"
+imageName = "1560599871.22"
 imageExtension = ".jpg"
 maxContours = 100
 minContours = 2
 fileSaveString = config["fileSaveString"]
 
 image = cv2.imread(directoryString + imageName + imageExtension)
+print(image.shape)
 og = image.copy()
 
 process_dim = (1200,700)
@@ -56,7 +57,10 @@ while True:
 contourDict = {i:contours[i] for i in range(len(contours))}
 
 draw_contours(imageX, contours)
+cv2.imshow("Contours", imageX)
+cv2.waitKey(0)
 
+"""
 # cv2.imwrite("1list.jpg", image)
 maxX = 0
 for i,cnt in enumerate(contours):
@@ -86,6 +90,7 @@ imageXRe = resize(imageX, display_dim)
 imageRe = resize(image, display_dim)
 cv2.imshow("Contours Before and After", np.concatenate((imageXRe, imageRe)))
 cv2.waitKey(0)
+"""
 # cv2.imshow("Drawn Contours (M2)", image)
 # cv2.imshow("Final Image (M2)", threshold)
 # cv2.imwrite(imageName + "Concat.jpg", np.concatenate((np.concatenate((ogResized, blurred)), np.concatenate((image, cv2.cvtColor(threshold, cv2.COLOR_GRAY2BGR))))))
