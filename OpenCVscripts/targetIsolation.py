@@ -26,18 +26,20 @@ import numpy as np                                  # Library to call C++ array 
 from sklearn.cluster import MiniBatchKMeans         # Easier to use version of opencv's kmeans system
 
 #Various setups
-kern = np.ones( ( 3, 3 ), np.uint8 )                # Quick variable to modify noise reduction steps taken in isolateLetter()
+kern = np.ones( ( 3, 3 ), np.uint8 )                # Quick variable to modify noise reduction steps taken in isolateLetter
+#relativeFilePath = "/media/data/Projects/UAV/CV/OpenCVscripts/" # A variable used to fix relative file paths if a system does not support it (VS Code debugger for example). Set to "" if running from command line.
+relativeFilePath = ""
 
 def main():                                         # Prints the colors of the shape, the two most difficult properties to get correct.
     checkMainDependencies()
-    image,shape,targetmask,letter,lettermask,shapecolor,lettercolor = isolate( cv2.imread( "dependencies/waifu2xgenerictargets/generictarget5.png" ) )
+    image,shape,targetmask,letter,lettermask,shapecolor,lettercolor = isolate( cv2.imread( relativeFilePath + "dependencies/generictarget.jpg" ) ) #waifu2xgenerictargets/generictarget5.png" ) )
     print( "Target Color: " + shapecolor )
     print( "Letter Color: " + lettercolor )
+    #cv2.imwrite( "d.png", shape );
 
 def isolate( roiCrop ):                             # Runs through the entire process of reducing a region-of-interest
     shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
     isolatedLetter, maskLetter = isolateLetter( shapewithmask, targetmask )
-    cv2.imwrite( "a.png", isolatedLetter )
     shapecolor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( shapewithmask, targetmask ) ] ) ] ), cv2.COLOR_BGR2HSV ) )     # Grabs a color, coverts it to a 1x1 OpenCV image, converts it to HSV, then passes said data to get color name
     letterColor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( isolatedLetter, maskLetter ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
     return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, letterColor
@@ -49,7 +51,7 @@ def checkDependencies():                            # Checks to ensure all requi
     global dependencies
     for dependent in dependencies:
         try:                                        # Goes to except if open() fails.
-            temp = open( "dependencies/" + dependent )
+            temp = open( relativeFilePath + "dependencies/" + dependent )
         except FileNotFoundError:
             print( "Dependency not found: " + dependent )
             sys.exit( 1 )                           # Exits if a file is missing, prining the offending data
@@ -57,18 +59,19 @@ def checkMainDependencies():                        # Checks to ensure all requi
     global maindependencies
     for dependent in maindependencies:
         try:                                        # Goes to except if open() fails.
-            temp = open( "dependencies/" + dependent )
+            temp = open( relativeFilePath + "dependencies/" + dependent )
         except FileNotFoundError:
             print( "Dependency not found: " + dependent )
             sys.exit( 1 )                           # Exits if a file is missing, printing the offending data
 
 def isolateTarget( croppedimage ):                  # Samples the border 100 pixels on each side from a reduced color set then removes those from all parts of the image, leaving the target.
     ori = croppedimage
-    scaledimg = cv2.blur( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), ( 3, 3 ) )     # Ensures the image is 400x400 pixels, then removes noise using blur()
+    #scaledimg = cv2.blur( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), ( 3, 3 ) )     # Ensures the image is 400x400 pixels, then removes noise using blur()
+    scaledimg = cv2.bilateralFilter( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), 7, 75, 75 );
     scaledimg2 = quantize( scaledimg, 16 )          # Reduces the number of colors in the image by allowing 16 intensities per channel
     crop1 = scaledimg2[ 0:100, 0:400 ]              # Makes two crops as the area to sample colors from
     crop2 = scaledimg2[ 300:400, 0:400 ]
-    unsortedcolors = np.concatenate( ( crop1, crop2 ) )     # Merges the two images side-by-side
+    unsortedcolors = np.concatenate( ( crop1, crop2 ) )     # Merges the two images side-by-sideW
     onedunsort = unsortedcolors.reshape( ( unsortedcolors.shape[ 0 ] * unsortedcolors.shape[ 1 ], 3 ) )     # Puts all pixels into a one dimensional array, invalid as a OpenCV image. Required for np.unique()
     colors = np.unique( onedunsort, axis = 0 )      # Finds all reoccuring pixel colrs, and removes them fom the array, thus creating a 'list' of colors to remove
     targetcrop = scaledimg2[ 100:300, 100:300 ]     # Crops the center area that was not sampled for colors. Assumes target in here
@@ -82,7 +85,7 @@ def isolateLetter( target, mask ):                  # Takes an input of the crop
     ori = target                                    # Makes a copy of the original image
     target = kMeansQuantize( target, 3 )            # Reduces the image to the three most common colors in it (background black, outer shape, inner letter). This step is often slightly inconsistent between runs.
     domcolor = dominantSimple( target, mask )       # Finds the more common color in the shape (thanks to the mask)
-    mask = cv2.erode( cv2.dilate( mask, kern, iterations = 1 ), kern, iterations = 3 )  # Cleans up any little imperfections in the mask. Works by making tiny imperfections smaller then rescaling the shape back up.
+    mask = cv2.erode( cv2.dilate( mask, kern, iterations = 1 ), kern, iterations = 5 )  # Cleans up any little imperfections in the mask. Works by making tiny imperfections smaller then rescaling the shape back up.
     target = cv2.bitwise_not( cv2.inRange( target, domcolor, domcolor ), mask = mask )  # Gets the location of the more common color in the target, then inverts it and puts the mask back on to get the letter's location
     return cv2.bitwise_and( ori, ori, mask = target ), target   # Returns the original image with only the letter shown, as well as the letter's mask
 
@@ -114,19 +117,20 @@ def dominantKMeans( image, mask ):     # Uses k-Means to obtain the most common 
     #        data.append( pdata[ i ] )
     #data = np.array( data )
     f = cv2.bitwise_and( pdata, pdata, mask = omask )   # Masks off the non-important regions
-    f = np.float32( data )                          # Adds precision to the numbers when calculating
+    f = np.float32( pdata )                          # Adds precision to the numbers when calculating
     criteria = ( cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0 )  # Black magic, sets up OpenCV Parameters
-    flags = cv2.KMEANS_RANDOM_CENTERS               # Makes the next step use random points, also is black magic 
+    flags = cv2.KMEANS_RANDOM_CENTERS               # Makes the next step use random points, also is black magic
     compactness,labels,centers = cv2.kmeans( f, 1, None, criteria, 10, flags)   # Moves those random points until a point is basically in a cluster of similarly-colored pixels
-    return( centers[ 0 ].astype( np.uint8 ) )       # Removes the precision needed for k-means 
-def dominantSimple( image, mask ):  
+    return( centers[ 0 ].astype( np.uint8 ) )       # Removes the precision needed for k-means
+
+def dominantSimple( image, mask ):
     samples = []                                    # Setup for this has to use non-array setups
-    for x in range( len( image[ 0 ] ) ):            # For every x row        
+    for x in range( len( image[ 0 ] ) ):            # For every x row
         for y in range( len( image[ 1 ] ) ):        # And every pixel on said row
             if mask[ x ][ y ] == 0:                 # Check if a point should be in a mask
-                continue    
+                continue
             samples.append( image[ x ][ y ] )       # If it should, it's added to the pool of colors
-    colors, count = np.unique( np.array( samples ), axis = 0, return_counts = True )    # Uses numpy to locate the unique colors. Is black magic 
+    colors, count = np.unique( np.array( samples ), axis = 0, return_counts = True )    # Uses numpy to locate the unique colors. Is black magic
     return colors[ count.argmax() ]                 # Returns the most dominant colors
 
 def hsv2name( hsv ):    # Approximates the color of a 1x1 image into a valid name
