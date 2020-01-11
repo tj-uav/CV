@@ -30,12 +30,14 @@ kern = np.ones( ( 3, 3 ), np.uint8 )                # Quick variable to modify n
 #relativeFilePath = "/media/data/Projects/UAV/CV/OpenCVscripts/" # A variable used to fix relative file paths if a system does not support it (VS Code debugger for example). Set to "" if running from command line.
 relativeFilePath = ""
 
+
 def main():                                         # Prints the colors of the shape, the two most difficult properties to get correct.
     checkMainDependencies()
     image,shape,targetmask,letter,lettermask,shapecolor,lettercolor = isolate( cv2.imread( relativeFilePath + "dependencies/generictarget.jpg" ) ) #waifu2xgenerictargets/generictarget5.png" ) )
     print( "Target Color: " + shapecolor )
     print( "Letter Color: " + lettercolor )
     #cv2.imwrite( "d.png", shape );
+
 
 def isolate( roiCrop ):                             # Runs through the entire process of reducing a region-of-interest
     shapewithoutmask, shapewithmask, targetmask = isolateTarget( roiCrop )
@@ -44,9 +46,12 @@ def isolate( roiCrop ):                             # Runs through the entire pr
     letterColor = hsv2name( cv2.cvtColor( np.array( [ np.array( [ dominantSimple( isolatedLetter, maskLetter ) ] ) ] ), cv2.COLOR_BGR2HSV ) )
     return shapewithoutmask, shapewithmask, targetmask, isolatedLetter, maskLetter, shapecolor, letterColor
 
+
 #Dependencies Checker
 maindependencies = [ "generictarget.jpg", "generictarget2.jpg", "generictarget3.jpg", "generictarget4.jpg", "generictarget5.jpg" ]   #Dependencies required when running independently
 dependencies = [ "color_hexes.txt" ]                            #Dependencies always in use
+
+
 def checkDependencies():                            # Checks to ensure all required files in dependencies[] exist in ./dependencies
     global dependencies
     for dependent in dependencies:
@@ -55,6 +60,8 @@ def checkDependencies():                            # Checks to ensure all requi
         except FileNotFoundError:
             print( "Dependency not found: " + dependent )
             sys.exit( 1 )                           # Exits if a file is missing, prining the offending data
+
+
 def checkMainDependencies():                        # Checks to ensure all required files in maindependencies[] exist in ./dependencies
     global maindependencies
     for dependent in maindependencies:
@@ -64,10 +71,11 @@ def checkMainDependencies():                        # Checks to ensure all requi
             print( "Dependency not found: " + dependent )
             sys.exit( 1 )                           # Exits if a file is missing, printing the offending data
 
+
 def isolateTarget( croppedimage ):                  # Samples the border 100 pixels on each side from a reduced color set then removes those from all parts of the image, leaving the target.
     ori = croppedimage
     #scaledimg = cv2.blur( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), ( 3, 3 ) )     # Ensures the image is 400x400 pixels, then removes noise using blur()
-    scaledimg = cv2.bilateralFilter( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), 7, 75, 75 );
+    scaledimg = cv2.bilateralFilter( cv2.resize( croppedimage, ( 400, 400 ), cv2.INTER_CUBIC ), 7, 75, 75 )
     scaledimg2 = quantize( scaledimg, 16 )          # Reduces the number of colors in the image by allowing 16 intensities per channel
     crop1 = scaledimg2[ 0:100, 0:400 ]              # Makes two crops as the area to sample colors from
     crop2 = scaledimg2[ 300:400, 0:400 ]
@@ -81,6 +89,8 @@ def isolateTarget( croppedimage ):                  # Samples the border 100 pix
     fmask = cv2.bitwise_not( fmask )                # Inverts fmask to change it from a map of where the background is to where it isn't (thus the location of the target)
     fscaledimg = scaledimg[ 100:300, 100:300 ]      # Crops the unmodified image so that the sampled area is not included
     return [ ori, cv2.bitwise_and( fscaledimg, fscaledimg, mask = fmask ), fmask ]  # Returns the input, a crop of the original image with the background removed, then a mask of the target
+
+
 def isolateLetter( target, mask ):                  # Takes an input of the cropped (200x200 target-centered) original image with or without the background, as well as the map of where it is.
     ori = target                                    # Makes a copy of the original image
     target = kMeansQuantize( target, 3 )            # Reduces the image to the three most common colors in it (background black, outer shape, inner letter). This step is often slightly inconsistent between runs.
@@ -88,6 +98,7 @@ def isolateLetter( target, mask ):                  # Takes an input of the crop
     mask = cv2.erode( cv2.dilate( mask, kern, iterations = 1 ), kern, iterations = 5 )  # Cleans up any little imperfections in the mask. Works by making tiny imperfections smaller then rescaling the shape back up.
     target = cv2.bitwise_not( cv2.inRange( target, domcolor, domcolor ), mask = mask )  # Gets the location of the more common color in the target, then inverts it and puts the mask back on to get the letter's location
     return cv2.bitwise_and( ori, ori, mask = target ), target   # Returns the original image with only the letter shown, as well as the letter's mask
+
 
 def quantize( image, n ):                           # Uses numpy slicing to quantize the most common intensities in each channel.
     indices = np.arange( 0, 256 )
@@ -98,6 +109,8 @@ def quantize( image, n ):                           # Uses numpy slicing to quan
     im2 = palette[ cv2.bitwise_and( image, image ) ]
     f = cv2.convertScaleAbs( im2 )
     return f
+
+
 def kMeansQuantize( image, n ):                     # Uses k-Means to quantize an image into n colors.
     image = cv2.cvtColor( image, cv2.COLOR_BGR2LAB )# The LAB color space is especially useful for this type of system, as it's similar to how a human eye works
     w, h, _ = image.shape                           # Gets the shape of the image for the next step
@@ -108,6 +121,8 @@ def kMeansQuantize( image, n ):                     # Uses k-Means to quantize a
     quant = quant.reshape( ( h, w, 3 ) )            # Rescales the quantized image back into its original shape. Simply imagine the pixels line wrqpping similar to a wore processor
     quant = cv2.cvtColor( quant, cv2.COLOR_LAB2BGR )# Reverts the color as well
     return quant
+
+
 def dominantKMeans( image, mask ):     # Uses k-Means to obtain the most common color in the image
     pdata = image.reshape( ( image.shape[ 0 ] * image.shape[ 1 ], 3 ) ) # k-Means requires the image to be one pixel tall
     omask = mask.reshape( ( mask.shape[ 0 ] * mask.shape[ 1 ], 1 ) )    # Do the same for the mask
@@ -123,6 +138,7 @@ def dominantKMeans( image, mask ):     # Uses k-Means to obtain the most common 
     compactness,labels,centers = cv2.kmeans( f, 1, None, criteria, 10, flags)   # Moves those random points until a point is basically in a cluster of similarly-colored pixels
     return( centers[ 0 ].astype( np.uint8 ) )       # Removes the precision needed for k-means
 
+
 def dominantSimple( image, mask ):
     samples = []                                    # Setup for this has to use non-array setups
     for x in range( len( image[ 0 ] ) ):            # For every x row
@@ -132,6 +148,7 @@ def dominantSimple( image, mask ):
             samples.append( image[ x ][ y ] )       # If it should, it's added to the pool of colors
     colors, count = np.unique( np.array( samples ), axis = 0, return_counts = True )    # Uses numpy to locate the unique colors. Is black magic
     return colors[ count.argmax() ]                 # Returns the most dominant colors
+
 
 def hsv2name( hsv ):    # Approximates the color of a 1x1 image into a valid name
     h = hsv[ 0 ][ 0 ][ 0 ]  # Imagine an image of size 1*1
@@ -160,6 +177,7 @@ def hsv2name( hsv ):    # Approximates the color of a 1x1 image into a valid nam
             return( "Blue" )
         else:
             return( "Purple" )
+
 
 def bgr2name( bgr ):    # Not recommended for use, many colors have not been verified
     [b,g,r] = bgr[0][0]
@@ -194,6 +212,7 @@ def bgr2name( bgr ):    # Not recommended for use, many colors have not been ver
         return( "White" )
     if b > 200 and r > 200 and g > 200:
         return( "White" )
+
 
 if( __name__ == "__main__" ):                       # Checks execution of program, runs main() if nessesary. Must stay at end
     main()
