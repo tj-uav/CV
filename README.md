@@ -1,4 +1,5 @@
 # CV
+This is the repository containing the computer vision code for TJUAV.
 
 ## TODO
 - [ ] Complete Haar Cascade Code
