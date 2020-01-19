@@ -1,5 +1,0 @@
-Make ML algorithm faster
-Make detection method faster
-Decrease number of images generated from initial detection method
-Be able to capture images from camera
-Be able to run code on live camera data
