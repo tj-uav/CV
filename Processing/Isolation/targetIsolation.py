@@ -28,7 +28,7 @@ from sklearn.cluster import MiniBatchKMeans         # Easier to use version of o
 #Various setups
 kern = np.ones( ( 3, 3 ), np.uint8 )                # Quick variable to modify noise reduction steps taken in isolateLetter
 #relativeFilePath = "/media/data/Projects/UAV/CV/OpenCVscripts/" # A variable used to fix relative file paths if a system does not support it (VS Code debugger for example). Set to "" if running from command line.
-relativeFilePath = ""
+relativeFilePath = "../../../CV_DATA/"
 
 
 def main():                                         # Prints the colors of the shape, the two most difficult properties to get correct.
