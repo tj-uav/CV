@@ -5,8 +5,9 @@ import numpy as np
 # Alex Black
 # Set of methods to simulate expected lens issues.
 # Sensor artifacts, using camera properties
-def noise( img, iso = 100, exposure = .005, signalToNoise = 70 ): # signalToNoise (gaussian) is defined at ISO100 - higher numbers are better. Typically this'll be equal to a camera's pixel pitch time 18, but research on a per-camera basis.
-	var = iso / signalToNoise * exposure ** .5
+def noise( img, iso = 100, signalToNoise = 70 ): # signalToNoise (gaussian) is defined at ISO100 - higher numbers are better. Typically this'll be equal to a camera's pixel pitch time 18, but research on a per-camera basis.
+	var = math.log( iso ** 2 ) / math.log( signalToNoise ) # More of an estimate equation, the actual math behind this seems to be a nightmare
+	print( var )
 	# Starting here, credit to https://stackoverflow.com/a/30609854
 	rows, cols, ch = img.shape 
 	mean = 2 * var
@@ -17,20 +18,20 @@ def noise( img, iso = 100, exposure = .005, signalToNoise = 70 ): # signalToNois
 
 # Near-field distortions. These methods will only simulate distortions at point, and will not apply the distortion to the entire image.
 # Other common abberations are ignored simply due to neglectable effects with modern equiptment
-def defocus( img, mask, blur = 0 ):	# Standard ol' blur. To simulate the effects of a lens the blur is exponential
+def defocus( img, mask, blur = 0 ):	# Standard ol' blur. To simulate the effects of a lens the blur is log-based.
 	img = cv2.bitwise_and( img, mask )
-	v = int( 2 ** blur )
-	if v % 2 == 1:
+	v = int( math.log( blur, 2 ) )
+	if v % 2 == 0:
 		v += 1
 	return cv2.GaussianBlur( img, ( v, v ), 0 )
 def axialChromaticAbberation( img, mask, strength = 0 ):	# Blurs channels selectively, strength increases by sqrt of input. Also technically a full distortion - see below.
 	b, g, r = cv2.split ( cv2.bitwise_and( img, mask ) )
-	adjstrength = math.ceil( strength ** .5 / 2. ) * 2 + 1
-	g = cv2.GaussianBlur( g, ( adjstrength, adjstrength ), 0 )
+	adjstrength = int( abs( strength ) / strength ) * math.ceil( abs( strength ) ** .5 / 2. ) * 2 + 1
+	g = cv2.GaussianBlur( g, ( abs( adjstrength ), abs( adjstrength ) ), 0 )
 	if strength > 0:	# Red channel stays focused
 		b = cv2.GaussianBlur( b, ( 2 * adjstrength + 1, 2 * adjstrength + 1 ), 0 )
 	else:	# Blue channel stays focused
-		r = cv2.GaussianBlur( r, ( 2 * adjstrength + 1, 2 * adjstrength + 1 ), 0 )
+		r = cv2.GaussianBlur( r, ( -2 * adjstrength + 1, -2 * adjstrength + 1 ), 0 )
 	return cv2.merge( ( b, g, r ) )
 def transverseChromaticAbberation( img, mask, theta = 0, strength = 0 ):	# Scales channels selectively - strength is linear, theta in radians. This is the classic 'rainbow glitch look' with red as the base.
 	v = ( strength * math.cos( theta ), -1 * strength * math.sin( theta ) )	# Reverse y to account for inverse y in images
@@ -60,13 +61,15 @@ def imageTransverseChromaticAbberation( img, strength = 0 ):	# This is a full-im
 
 import os
 def main(): # main() method to aid debugging
-	img = cv2.imread( 'flower.JPG' )
-	#img = transverseChromaticAbberation( img, img, 2, 6 )	# No mask, just use same image as mask
-	#img = axialChromaticAbberation( img, img, 1000 )
-	#img = noise( img, iso = 1600 , exposure = .01 )
-	img = imageTransverseChromaticAbberation( img, strength = 25 )
+	img = cv2.imread( 'b.png' )
+	img = defocus( img, img, 4 )
+	img = axialChromaticAbberation( img, img, 10000 )
+	img = transverseChromaticAbberation( img, img, 3, 5 )	# No mask, just use same image as mask
+	img = imageTransverseChromaticAbberation( img, strength = 20 )
+	img = noise( img, iso = 16000 )
+	img = cv2.blur( img, ( 2, 2 ) )	# Simulate de-noise algorithm
 
-	cv2.imwrite( 'a.png', img )
+	cv2.imwrite( 'b.png', img )
 
 if __name__ == "__main__":
 	main()
