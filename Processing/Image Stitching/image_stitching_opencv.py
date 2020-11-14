@@ -3,11 +3,11 @@
 #Imports
 import cv2
 import numpy as np
-import os
+import os, signal
 
 #Reading image files
 images = []
-imagesDirectory = 'Processing/Image Stitching/Images/'
+imagesDirectory = os.getcwd() + '/Processing/Image Stitching/Images/'
 dim = (1024,768)
 for fileName in os.listdir(imagesDirectory):
     fileDir = os.path.join(imagesDirectory, fileName)
@@ -26,3 +26,5 @@ if ret ==cv2.STITCHER_OK:
     cv2.destroyAllWindows()
 else:
     print("Error during stitching")
+
+os.kill (os.getpid(), signal.SIGTERM)
