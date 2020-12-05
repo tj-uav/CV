@@ -90,4 +90,4 @@ def mkdir(im_name):
 
     return im_dir
 
-image_split(15, 20, 100)
+image_split(2, 2, 100)
