@@ -63,7 +63,7 @@ def image_split(rows, columns, buffer):
             im1 = im.crop((left - left_buffers[i], top - top_buffers[j], right + right_buffers[i], bottom + bottom_buffers[j]))
 
             # add rotation noise to dataset
-            im1 = im1.rotate(5 * (random() - 0.5), Image.NEAREST, expand = 1)
+            # im1 = im1.rotate(5 * (random() - 0.5), Image.NEAREST, expand = 1)
 
             im1.save(f"{split_images_dir}/{im_name}_{i:03}_{j:03}.png")
             im_num += 1
