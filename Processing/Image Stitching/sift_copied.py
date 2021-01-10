@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# python sift_copied.py Images/ Images/Map_000_000.png output/
 
 import os
 import sys
@@ -124,7 +125,7 @@ class Stitch(object):
         base_img = cv2.GaussianBlur(cv2.cvtColor(base_img_rgb,cv2.COLOR_BGR2GRAY), (5,5), 0)
     
         # Use the SIFT feature detector
-        detector = cv2.xfeatures2d.SIFT_create()
+        detector = cv2.SIFT_create()
     
         # Find key points in base image for motion estimation
         base_features, base_descs = detector.detectAndCompute(base_img, None)
@@ -285,7 +286,7 @@ class Stitch(object):
             # Crop black edge
             final_gray = cv2.cvtColor(final_img, cv2.COLOR_BGR2GRAY)
             _, thresh = cv2.threshold(final_gray, 1, 255, cv2.THRESH_BINARY)
-            dino, contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
             print("Found %d contours..." % (len(contours)))
     
             max_area = 0
