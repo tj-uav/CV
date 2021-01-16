@@ -39,7 +39,6 @@ class Stitch(object):
             except ValueError:
                 pass
                 
-        
         except:
             print("Unable to open directory: %s" % image_dir)
             sys.exit(-1)
@@ -47,11 +46,18 @@ class Stitch(object):
         self.dir_list = map(lambda x: os.path.join(image_dir, x), self.dir_list)
         self.dir_list = list(filter(lambda x: x != key_frame, self.dir_list))
     
-        base_img_rgb = cv2.imread(key_frame)
-        if base_img_rgb is None:
+        base_img = cv2.imread(key_frame)
+        if base_img is None:
             raise IOError("%s doesn't exist" %key_frame)
         
-        final_img = self.stitch(base_img_rgb, 0)    
+        count = 0
+        image_dir += "/"
+        while True:
+            new_img = input("Enter the next image file name (if you want to exit type \"exit\"): ")
+            if new_img == "exit":
+                break 
+            base_img = self.stitch(base_img, image_dir + new_img,  count)
+            count += 1  
 
 
     def filter_matches(self, matches, ratio = 0.75):
@@ -116,8 +122,8 @@ class Stitch(object):
         return (min_x, min_y, max_x, max_y)
 
     
-    def stitch(self, base_img_rgb, round=0):
-    
+    def stitch(self, base_img_rgb, next_img_path, round=0):
+        
         if ( len(self.dir_list) < 1 ):
             return base_img_rgb 
     
@@ -140,8 +146,7 @@ class Stitch(object):
     
         closestImage = None
     
-        next_img_path = self.dir_list[0]
-        print(next_img_path)
+        print (next_img_path)
         print("Reading %s..." % next_img_path)
 
         # Read in the next image...
@@ -314,11 +319,7 @@ class Stitch(object):
             final_filename = "%s/%d.JPG" % (self.output_dir, round)
             cv2.imwrite(final_filename, final_img)
     
-            return self.stitch(final_img, round+1)
-    
-        else:
-    
-            return self.stitchImages(base_img_rgb, round+1)
+            return final_img
 
 
 # ----------------------------------------------------------------------------
