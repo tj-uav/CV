@@ -2,7 +2,7 @@ import cv2
 import numpy as np 
 import os 
 import glob 
-  
+import imutils
 #filenames is a list of the filenames of images of checkerboards. Returns the image distortion values  
 def getDistortionVals(filenames):
     CHECKERBOARD = (3,3) 
@@ -92,7 +92,25 @@ def adjustBrightness(filename1, filename2):
     hsv2[...,2] = hsv2[...,2] * (sum1/sum2)
     return cv2.cvtColor(hsv2,cv2.COLOR_HSV2RGB)
 
-image = adjustBrightness('20210110_115451.jpg', '20210110_115443.jpg')
-cv2.imshow('f', image)
-cv2.waitKey(5000)
-#matrix, distortion, r_vecs, t_vecs = getDistortionVals(['20210110_115443.jpg'])
+def rotateImage(image, degree):
+    frame = imutils.rotate_bound(image, degree)
+    return frame
+
+def placeImage(bigImage, smallImage, center):
+    dim = smallImage.shape
+    height = dim[0]
+    width = dim[1]
+    topLeft = (center[0] - width//2, center[1] - height//2)
+    bigImage[topLeft[0]:topLeft[0]+width, topLeft[1]:topLeft[1]+height, :] = smallImage[0:width, 0:height, :]
+    print(topLeft)
+    return bigImage
+
+# image = cv2.imread('Images/Right.jpg')
+# image1 = cv2.imread('Images/Left.jpg')
+# image1 = cv2.resize(image1, (300,300))
+# rImage = placeImage(image, image1, (199, 200))
+# cv2.imshow('', rImage)
+# image = adjustBrightness('20210110_115451.jpg', '20210110_115443.jpg')
+# cv2.imshow('f', image)
+# cv2.waitKey(5000)
+# matrix, distortion, r_vecs, t_vecs = getDistortionVals(['20210110_115443.jpg'])
