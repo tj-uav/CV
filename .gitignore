@@ -5,6 +5,7 @@ DataGen/.vscode
 DataGen/__pycache__
 DataGen/Trimmed
 DataGen/CascadeData
+Processing/Image Stitching/output
 .vscode
 .vscode/*
 __pycache__
