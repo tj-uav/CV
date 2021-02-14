@@ -36,6 +36,17 @@ def crop_img(image, bounds, scales=[1,1]):
 
 ## Preprocessing functions
 
+#Splits image into grid
+def splitImage(image, gridHeight, gridWidth):
+    height, width, _ = image.shape
+    rectHeight = height//gridHeight
+    rectWidth = width//gridWidth
+    grid = []
+    for h in range(0,height,rectHeight):
+        for w in range(0,width,rectWidth):
+            grid.append(image[h:h+rectHeight, w:w+rectWidth])
+    return (grid)
+
 # Image should be BGR
 def bilateral(image, thresh, sigma):
     return cv2.bilateralFilter(image, thresh, sigma, sigma)
