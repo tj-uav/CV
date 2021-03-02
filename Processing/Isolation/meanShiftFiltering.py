@@ -71,7 +71,7 @@ def removeLargeConnectedComponents(image, max_size):
 
 def findTargets(image):
     startTime = time.time()
-    image = cv2.resize(image, (1200, 800))
+    image = cv2.resize(image, (800, 600))
     cv2.imshow("Origional", image)
     meansImage = cv2.pyrMeanShiftFiltering(image, 30, 70)
     edgeImage = cv2.Canny(meansImage,100,200)
@@ -81,7 +81,7 @@ def findTargets(image):
     print ("Detection Procesing Time:", str(time.time() - startTime))
     return (im_with_keypoints)
 
-imageDir = "8.jpg"
+imageDir = "yuh.jpg"
 image = cv2.imread(imageDir)
 finalImage = findTargets(image)
 cv2.imshow("Final", finalImage)
