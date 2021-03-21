@@ -5,20 +5,17 @@ import os
 import time
 from matplotlib import pyplot as plt
 
-# des = cv2.bitwise_not(meansImage)
-# contour,hier = cv2.findContours(des,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
-
-# for cnt in contour:
-#     cv2.drawContours(des,[cnt],0,255,-1)
-
-#h, w = closing.shape[:2]
-#mask = np.zeros((h+2, w+2), np.uint8)
-#cv2.floodFill(closing, mask, (0,0), 255)
-#closing = cv2.bitwise_not(closing)
-
 def prepareEdgeImage(edgeImage):
-    """
-    Applies morphological transformations to binary (edge) image.
+    """ Applies morphological transformations to binary (edge) image for better plob detection.
+            1) Dilates lines to close gaps in lines (2x2 kernel size)
+            2) Removes large connected compents, which are likely noise
+            3) Applies morphological closing, which closes up any "blobs" for better blob detection
+
+    Args:
+        edgeImage (Binary image (grayscale with vals of either 0 or 255)): Image with canny edge detection applied (or any other edge detection)
+
+    Returns:
+        Binary image: Binary image ready for blob detection
     """
     kernel = np.ones((2,2),np.uint8)
     dilated_img = cv2.dilate(edgeImage, kernel, iterations = 2)
@@ -31,8 +28,13 @@ def prepareEdgeImage(edgeImage):
     return closing
 
 def blobDetection(image):
-    """
-    Applies blob detection to prepared image. Returns (keypoints, image with keypoints)
+    """ Applies blob detection to prepared image using custom parameters
+
+    Args:
+        image (Numpy array): Image to be used for blob detection
+
+    Returns:
+        Tuple: (list of keypoints of possible target locations, image with keypoints drawn on it)
     """
     params = cv2.SimpleBlobDetector_Params()
     params.minThreshold = 10
@@ -53,6 +55,16 @@ def blobDetection(image):
     return (keypoints, im_with_keypoints)
 
 def getTargetImages(targetCoordinates, image, bigImage):
+    """ Using the keypoints from blob detection, returns the cropped versions of the targets for classification
+
+    Args:
+        targetCoordinates (keypoint list): List of keypoints from blob detection
+        image (numpy array): Resized image used for easier/quicker target detection
+        bigImage (numpy array): Orginial image
+
+    Returns:
+        Numpy array list: List containing numpy arrays representing cropped possible target locations
+    """    
     croppedImages = []
     padding = 5
     for coord in targetCoordinates:
@@ -67,6 +79,15 @@ def getTargetImages(targetCoordinates, image, bigImage):
     return croppedImages
 
 def removeLargeConnectedComponents(image, max_size):
+    """ Removes any connected components that are larger than a specified size (max_size)
+
+    Args:
+        image (NumPy Array): Binary image to be processed
+        max_size (Int): Max size of connected component
+
+    Returns:
+        NumPy Array: Image without large components 
+    """    
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]; nb_components = nb_components - 1
 
@@ -77,6 +98,14 @@ def removeLargeConnectedComponents(image, max_size):
     return img2.astype(np.uint8)
 
 def findTargets(origionalImage):
+    """ Finds targets in image
+
+    Args:
+        origionalImage (NumPy Array): Image to be processed
+
+    Returns:
+        Tuple: (NumPy Array image with possible targets circled, List of NumPy Array images of possible targets, cropped out)
+    """    
     startTime = time.time()
     image = cv2.resize(origionalImage, (800, 600))
     #cv2.imshow("Origional", image)
